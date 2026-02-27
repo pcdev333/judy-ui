@@ -1,0 +1,31 @@
+{
+  "name": "judy-ui",
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "1.23.1",
+    "@supabase/supabase-js": "^2.39.3",
+    "expo": "~51.0.28",
+    "expo-constants": "~16.0.2",
+    "expo-linking": "~6.3.1",
+    "expo-router": "~3.5.23",
+    "expo-status-bar": "~1.12.1",
+    "nativewind": "^2.0.11",
+    "react": "18.2.0",
+    "react-native": "0.74.5",
+    "react-native-url-polyfill": "^2.0.0",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@types/react": "~18.2.79",
+    "tailwindcss": "^3.4.3",
+    "typescript": "~5.3.3"
+  }
+}
