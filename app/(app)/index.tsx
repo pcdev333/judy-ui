@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { lockTomorrow } from '@/lib/api';
 import { useWorkoutStore } from '@/store/useWorkoutStore';
 import WeekDayStrip from '@/components/WeekDayStrip';
 import WorkoutHeroCard from '@/components/WorkoutHeroCard';
@@ -9,6 +10,12 @@ import EmptyCard from '@/components/ui/EmptyCard';
 
 function getTodayDate(): string {
   return new Date().toISOString().split('T')[0];
+}
+
+function getTomorrowDate(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().split('T')[0];
 }
 
 function formatDisplayDate(isoDate: string): string {
@@ -20,6 +27,9 @@ export default function TodayScreen() {
   const router = useRouter();
   const { todayWorkout, isLoading, setTodayWorkout, setLoading } = useWorkoutStore();
   const [selectedDate, setSelectedDate] = useState(getTodayDate());
+  const [tomorrowLocked, setTomorrowLocked] = useState(false);
+  const [lockingTomorrow, setLockingTomorrow] = useState(false);
+  const [tomorrowHasWorkout, setTomorrowHasWorkout] = useState(false);
 
   useEffect(() => {
     async function fetchTodayWorkout() {
@@ -43,6 +53,23 @@ export default function TodayScreen() {
 
     fetchTodayWorkout();
   }, [selectedDate]);
+
+  useEffect(() => {
+    async function fetchTomorrowLockState() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const tomorrowDate = getTomorrowDate();
+      const { data } = await supabase
+        .from('planned_workouts')
+        .select('is_locked')
+        .eq('user_id', session.user.id)
+        .eq('planned_date', tomorrowDate)
+        .single();
+      setTomorrowLocked(data?.is_locked ?? false);
+      setTomorrowHasWorkout(data != null);
+    }
+    fetchTomorrowLockState();
+  }, []);
 
   const today = getTodayDate();
   const structured = todayWorkout?.workout?.structured_json as {
@@ -107,17 +134,56 @@ export default function TodayScreen() {
           />
         )}
 
-        {/* Tomorrow empty card */}
+        {/* Tomorrow section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionLabel}>TOMORROW</Text>
+          <View style={styles.lockToggleRow}>
+            <Text style={styles.lockToggleLabel}>Lock Tomorrow</Text>
+            <Switch
+              value={tomorrowLocked}
+              onValueChange={async (value) => {
+                if (value && !tomorrowHasWorkout) {
+                  Alert.alert('No workout assigned', 'Assign a workout to tomorrow first before locking.');
+                  return;
+                }
+                setTomorrowLocked(value);
+                setLockingTomorrow(true);
+                try {
+                  await lockTomorrow(value);
+                } catch (e: unknown) {
+                  setTomorrowLocked(!value);
+                  Alert.alert('Error', e instanceof Error ? e.message : 'Failed to update lock.');
+                } finally {
+                  setLockingTomorrow(false);
+                }
+              }}
+              trackColor={{ false: '#C7C7CC', true: '#E8470A' }}
+              thumbColor="#FFFFFF"
+              ios_backgroundColor="#C7C7CC"
+              disabled={lockingTomorrow}
+            />
+          </View>
         </View>
-        <EmptyCard
-          icon="🌅"
-          title="Tomorrow is empty"
-          subtitle="Plan ahead and stay consistent with your training."
-          ctaLabel="Plan Tomorrow's Workout"
-          onCtaPress={() => router.push('/(app)/planner')}
-        />
+        {tomorrowLocked ? (
+          <View style={styles.lockedTomorrowCard}>
+            <Text style={styles.lockedTomorrowIcon}>🔒</Text>
+            <View style={styles.lockedTomorrowInfo}>
+              <Text style={styles.lockedTomorrowTitle}>Tomorrow is locked</Text>
+              <Text style={styles.lockedTomorrowSubtitle}>Unlock to change tomorrow's workout.</Text>
+            </View>
+            <TouchableOpacity onPress={() => router.push('/(app)/planner')} style={styles.planButton}>
+              <Text style={styles.planButtonText}>View</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <EmptyCard
+            icon="🌅"
+            title="Tomorrow is empty"
+            subtitle="Plan ahead and stay consistent with your training."
+            ctaLabel="Plan Tomorrow's Workout"
+            onCtaPress={() => router.push('/(app)/planner')}
+          />
+        )}
       </ScrollView>
     </View>
   );
@@ -196,6 +262,9 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   sectionLabel: {
     fontSize: 11,
@@ -203,6 +272,57 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  lockToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  lockToggleLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#8E8E93',
+  },
+  lockedTomorrowCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    gap: 12,
+  },
+  lockedTomorrowIcon: {
+    fontSize: 24,
+    color: '#E8470A',
+  },
+  lockedTomorrowInfo: {
+    flex: 1,
+  },
+  lockedTomorrowTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 2,
+  },
+  lockedTomorrowSubtitle: {
+    fontSize: 12,
+    color: '#8E8E93',
+  },
+  planButton: {
+    backgroundColor: '#E8470A',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  planButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
 

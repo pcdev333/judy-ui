@@ -6,6 +6,7 @@ interface WeekDayStripProps {
   onSelectDate: (date: string) => void;
   plannedDates?: string[];
   completedDates?: string[];
+  lockedDates?: string[];
 }
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -31,6 +32,7 @@ export default function WeekDayStrip({
   onSelectDate,
   plannedDates = [],
   completedDates = [],
+  lockedDates = [],
 }: WeekDayStripProps) {
   const weekDates = getWeekDates(selectedDate);
 
@@ -45,6 +47,7 @@ export default function WeekDayStrip({
         const isSelected = iso === selectedDate;
         const isCompleted = completedDates.includes(iso);
         const isPlanned = plannedDates.includes(iso);
+        const isLocked = lockedDates.includes(iso);
 
         return (
           <TouchableOpacity
@@ -62,7 +65,9 @@ export default function WeekDayStrip({
               </Text>
             </View>
             <View style={styles.dotRow}>
-              {isCompleted ? (
+              {isLocked ? (
+                <Text style={styles.lockIcon}>🔒</Text>
+              ) : isCompleted ? (
                 <View style={[styles.dot, styles.completedDot]} />
               ) : isPlanned ? (
                 <View style={[styles.dot, styles.plannedDot]} />
@@ -118,9 +123,13 @@ const styles = StyleSheet.create({
   },
   dotRow: {
     marginTop: 3,
-    height: 6,
+    height: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  lockIcon: {
+    fontSize: 10,
+    lineHeight: 14,
   },
   dot: {
     width: 5,
