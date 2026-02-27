@@ -34,3 +34,19 @@ export interface WorkoutLog {
   weight: number;
   created_at: string;
 }
+
+export interface ParsedExercise {
+  name: string;
+  sets: number;
+  reps: number;
+  weight?: number;
+  unit?: string;
+}
+
+export interface ParsedWorkout {
+  title: string;
+  category?: string;
+  duration?: number;
+  muscle_groups?: string[];
+  exercises: ParsedExercise[];
+}
