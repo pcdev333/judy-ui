@@ -1,3 +1,4 @@
+import '../global.css';
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { Slot, useRouter, useSegments } from 'expo-router';
