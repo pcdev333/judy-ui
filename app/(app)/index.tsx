@@ -117,7 +117,7 @@ export default function TodayScreen() {
               </Text>
             </View>
             <TouchableOpacity
-              onPress={() => router.push(`/(app)/workout/${todayWorkout.workout_id}`)}
+              onPress={() => router.push(`/(app)/workout/${selectedDate}`)}
               style={styles.startButton}
             >
               <Text style={styles.startIcon}>▶</Text>
