@@ -30,8 +30,8 @@ export interface WorkoutLog {
   planned_workout_id: string;
   exercise_name: string;
   set_number: number;
-  reps_completed: number;
-  weight: number;
+  reps_completed: number | null;
+  weight: number | null;
   created_at: string;
 }
 

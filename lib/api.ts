@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Workout, ParsedWorkout, PlannedWorkout } from '@/types';
+import { Workout, ParsedWorkout, PlannedWorkout, WorkoutLog } from '@/types';
 
 function getTomorrow(): string {
   const d = new Date();
@@ -143,4 +143,63 @@ export async function setDayLocked(date: string, isLocked: boolean): Promise<voi
 
 export async function lockTomorrow(isLocked: boolean): Promise<void> {
   return setDayLocked(getTomorrow(), isLocked);
+}
+
+export async function fetchPlannedWorkoutByDate(date: string): Promise<PlannedWorkout | null> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) return null;
+
+  const { data } = await supabase
+    .from('planned_workouts')
+    .select('*, workout:workouts(*)')
+    .eq('user_id', session.user.id)
+    .eq('planned_date', date)
+    .single();
+
+  return (data as PlannedWorkout) ?? null;
+}
+
+export async function fetchWorkoutLogs(plannedWorkoutId: string): Promise<WorkoutLog[]> {
+  const { data, error } = await supabase
+    .from('workout_logs')
+    .select('*')
+    .eq('planned_workout_id', plannedWorkoutId)
+    .order('set_number', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as WorkoutLog[];
+}
+
+export async function upsertWorkoutLog(
+  plannedWorkoutId: string,
+  exerciseName: string,
+  setNumber: number,
+  repsCompleted: number | null,
+  weight: number | null,
+): Promise<WorkoutLog> {
+  const { data, error } = await supabase
+    .from('workout_logs')
+    .upsert(
+      {
+        planned_workout_id: plannedWorkoutId,
+        exercise_name: exerciseName,
+        set_number: setNumber,
+        reps_completed: repsCompleted,
+        weight,
+      },
+      { onConflict: 'planned_workout_id,exercise_name,set_number' },
+    )
+    .select()
+    .single();
+  if (error) throw error;
+  return data as WorkoutLog;
+}
+
+export async function finishPlannedWorkout(plannedWorkoutId: string): Promise<void> {
+  const { error } = await supabase
+    .from('planned_workouts')
+    .update({ is_completed: true, completed_at: new Date().toISOString() })
+    .eq('id', plannedWorkoutId);
+  if (error) throw error;
 }
