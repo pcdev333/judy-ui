@@ -10,6 +10,9 @@ interface WorkoutState {
   selectedPlannerDate: string;
   activePlannedWorkout: PlannedWorkout | null;
   activeWorkoutLogs: WorkoutLog[];
+  currentStreak: number;
+  longestStreak: number;
+  lastWorkoutDate: string | null;
   setTodayWorkout: (workout: PlannedWorkout | null) => void;
   setLoading: (loading: boolean) => void;
   setWorkouts: (workouts: Workout[]) => void;
@@ -21,6 +24,7 @@ interface WorkoutState {
   setActivePlannedWorkout: (workout: PlannedWorkout | null) => void;
   setActiveWorkoutLogs: (logs: WorkoutLog[]) => void;
   upsertActiveWorkoutLog: (log: WorkoutLog) => void;
+  setStreakData: (data: { current_streak: number; longest_streak: number; last_workout_date: string | null }) => void;
 }
 
 export const useWorkoutStore = create<WorkoutState>((set) => ({
@@ -32,6 +36,9 @@ export const useWorkoutStore = create<WorkoutState>((set) => ({
   selectedPlannerDate: new Date().toISOString().split('T')[0],
   activePlannedWorkout: null,
   activeWorkoutLogs: [],
+  currentStreak: 0,
+  longestStreak: 0,
+  lastWorkoutDate: null,
   setTodayWorkout: (workout) => set({ todayWorkout: workout }),
   setLoading: (loading) => set({ isLoading: loading }),
   setWorkouts: (workouts) => set({ workouts }),
@@ -65,4 +72,6 @@ export const useWorkoutStore = create<WorkoutState>((set) => ({
       updated[idx] = log;
       return { activeWorkoutLogs: updated };
     }),
+  setStreakData: ({ current_streak, longest_streak, last_workout_date }) =>
+    set({ currentStreak: current_streak, longestStreak: longest_streak, lastWorkoutDate: last_workout_date }),
 }));
