@@ -19,8 +19,11 @@ export default function AuthScreen() {
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {
-        // emailRedirectTo includes the deep link callback URL
-        emailRedirectTo: 'judy://auth/callback',
+        // In Expo Go (dev), custom schemes like judy:// don't work — use the exp:// URL instead.
+        // In production builds, judy:// deep link is used.
+        emailRedirectTo: __DEV__
+          ? process.env.EXPO_PUBLIC_AUTH_REDIRECT_URL ?? 'exp://localhost:8081/--/auth/callback'
+          : 'judy://auth/callback',
       },
     });
     

@@ -27,29 +27,6 @@
     "plugins": ["expo-router"],
     "experiments": {
       "typedRoutes": true
-    },
-    "deepLinking": {
-      "schemes": ["judy", "exp"],
-      "prefixes": ["judy://", "exp://"],
-      "config": {
-        "screens": {
-          "(auth)": {
-            "screens": {
-              "callback": "callback",
-              "index": ""
-            }
-          },
-          "(app)": {
-            "screens": {
-              "index": "index",
-              "create": "create",
-              "library": "library",
-              "planner": "planner",
-              "workout": "workout/:id"
-            }
-          }
-        }
-      }
     }
   }
 }
