@@ -6,9 +6,15 @@ import { Slot, useRouter, useSegments } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
 
+// DEV ONLY — provides setDevBypass to the auth screen so it can bypass auth during development.
+export const DevBypassContext = React.createContext<{
+  setDevBypass: (v: boolean) => void;
+}>({ setDevBypass: () => {} });
+
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [devBypass, setDevBypass] = useState(false);
   const router = useRouter();
   const segments = useSegments();
 
@@ -32,12 +38,12 @@ export default function RootLayout() {
 
     const inAuthGroup = segments[0] === '(auth)';
 
-    if (!session && !inAuthGroup) {
-      router.replace('/(auth)');
-    } else if (session && inAuthGroup) {
-      router.replace('/(app)');
+    if (devBypass || session) {
+      if (inAuthGroup) router.replace('/(app)');
+    } else {
+      if (!inAuthGroup) router.replace('/(auth)');
     }
-  }, [session, initialized, segments]);
+  }, [session, devBypass, initialized, segments]);
 
   if (!initialized) {
     return (
@@ -50,8 +56,10 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider> 
+      <DevBypassContext.Provider value={{ setDevBypass }}>
       <Slot />
+         </DevBypassContext.Provider>
     </SafeAreaProvider>
   );
 }
