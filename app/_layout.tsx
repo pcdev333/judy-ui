@@ -1,6 +1,7 @@
 import '../global.css';
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
@@ -46,15 +47,19 @@ export default function RootLayout() {
 
   if (!initialized) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#111827" />
-      </View>
+      <SafeAreaProvider>
+        <View className="flex-1 items-center justify-center bg-white">
+          <ActivityIndicator size="large" color="#111827" />
+        </View>
+      </SafeAreaProvider>
     );
   }
 
   return (
-    <DevBypassContext.Provider value={{ setDevBypass }}>
+    <SafeAreaProvider> 
+      <DevBypassContext.Provider value={{ setDevBypass }}>
       <Slot />
-    </DevBypassContext.Provider>
+         </DevBypassContext.Provider>
+    </SafeAreaProvider>
   );
 }
