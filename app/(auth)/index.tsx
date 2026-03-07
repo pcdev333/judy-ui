@@ -14,7 +14,16 @@ export default function AuthScreen() {
   async function handleSendMagicLink() {
     if (!email.trim()) return;
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({ email: email.trim() });
+    
+    // Send magic link with proper redirect URL
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: {
+        // emailRedirectTo includes the deep link callback URL
+        emailRedirectTo: 'judy://auth/callback',
+      },
+    });
+    
     setLoading(false);
     if (error) {
       Alert.alert('Error', error.message);
