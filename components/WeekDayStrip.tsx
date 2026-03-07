@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, PanResponder } from 'react-native';
 
 interface WeekDayStripProps {
   selectedDate: string;
@@ -48,6 +48,14 @@ function getMonthGrid(year: number, month: number): (string | null)[] {
   return cells;
 }
 
+const SWIPE_THRESHOLD = 50;
+
+function offsetWeek(referenceDate: string, weeks: number): string {
+  const ref = new Date(referenceDate + 'T00:00:00');
+  ref.setDate(ref.getDate() + weeks * 7);
+  return toIso(ref);
+}
+
 export default function WeekDayStrip({
   selectedDate,
   onSelectDate,
@@ -63,6 +71,44 @@ export default function WeekDayStrip({
 
   const today = new Date().toISOString().split('T')[0];
   const weekDates = getWeekDates(selectedDate);
+
+  // Keep refs to avoid stale closures in PanResponder callbacks
+  const selectedDateRef = useRef(selectedDate);
+  selectedDateRef.current = selectedDate;
+  const onSelectDateRef = useRef(onSelectDate);
+  onSelectDateRef.current = onSelectDate;
+
+  const weekPanResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, { dx, dy }) =>
+        Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10,
+      onPanResponderRelease: (_, { dx }) => {
+        if (dx < -SWIPE_THRESHOLD) {
+          onSelectDateRef.current(offsetWeek(selectedDateRef.current, 1));
+        } else if (dx > SWIPE_THRESHOLD) {
+          onSelectDateRef.current(offsetWeek(selectedDateRef.current, -1));
+        }
+      },
+    })
+  ).current;
+
+  const monthPanResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, { dx, dy }) =>
+        Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10,
+      onPanResponderRelease: (_, { dx }) => {
+        if (dx < -SWIPE_THRESHOLD) {
+          setCalView(({ year, month }) =>
+            month === 11 ? { year: year + 1, month: 0 } : { year, month: month + 1 }
+          );
+        } else if (dx > SWIPE_THRESHOLD) {
+          setCalView(({ year, month }) =>
+            month === 0 ? { year: year - 1, month: 11 } : { year, month: month - 1 }
+          );
+        }
+      },
+    })
+  ).current;
 
   function prevMonth() {
     setCalView(({ year, month }) =>
@@ -84,7 +130,7 @@ export default function WeekDayStrip({
     }
 
     return (
-      <View style={styles.monthContainer}>
+      <View style={styles.monthContainer} {...monthPanResponder.panHandlers}>
         <View style={styles.monthHeader}>
           <TouchableOpacity onPress={prevMonth} style={styles.navButton} activeOpacity={0.7}>
             <Text style={styles.navArrow}>‹</Text>
@@ -156,12 +202,12 @@ export default function WeekDayStrip({
 
   // Weekly strip (default view)
   return (
-    <View style={collapsible ? styles.weekStripWrapper : undefined}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.container}
-        style={collapsible ? styles.weekScrollView : undefined}
+    <View style={collapsible ? styles.weekStripWrapper : undefined} {...weekPanResponder.panHandlers}>
+      <View
+        style={[
+          styles.container,
+          collapsible ? styles.weekScrollView : undefined,
+        ]}
       >
         {weekDates.map((date) => {
           const iso = toIso(date);
@@ -199,7 +245,7 @@ export default function WeekDayStrip({
             </TouchableOpacity>
           );
         })}
-      </ScrollView>
+      </View>
       {collapsible && (
         <TouchableOpacity onPress={() => setExpanded(true)} style={styles.toggleButton} activeOpacity={0.7}>
           <Text style={styles.toggleArrow}>▼</Text>
@@ -219,6 +265,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 8,
     gap: 4,
