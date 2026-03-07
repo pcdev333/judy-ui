@@ -36,12 +36,12 @@ export default function RootLayout() {
   useEffect(() => {
     if (!initialized) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
+    const inAuthGroup = segments[0] === 'auth';
 
     if (devBypass || session) {
       if (inAuthGroup) router.replace('/(app)');
     } else {
-      if (!inAuthGroup) router.replace('/(auth)');
+      if (!inAuthGroup) router.replace('/auth');
     }
   }, [session, devBypass, initialized, segments]);
 

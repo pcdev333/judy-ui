@@ -154,8 +154,9 @@ If you prefer an emulator instead of a physical device:
 ```
 judy-ui/
 ├── app/
-│   ├── (auth)/
-│   │   └── index.tsx           # Auth screen — email input + magic link
+│   ├── auth/
+│   │   ├── index.tsx           # Auth screen — email input + magic link  (route: /auth)
+│   │   └── callback.tsx        # Magic link callback handler             (route: /auth/callback)
 │   ├── (app)/
 │   │   ├── index.tsx           # Today screen (home after login)
 │   │   ├── workout/
