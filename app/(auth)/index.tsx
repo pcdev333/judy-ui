@@ -23,8 +23,8 @@ export default function AuthScreen() {
         // Set EXPO_PUBLIC_AUTH_REDIRECT_URL in your .env to your machine's LAN IP.
         // In production builds, judy:// deep link is used.
         emailRedirectTo: __DEV__
-          ? process.env.EXPO_PUBLIC_AUTH_REDIRECT_URL ?? 'exp://localhost:8081/--/auth/callback'
-          : 'judy://auth/callback',
+          ? process.env.EXPO_PUBLIC_AUTH_REDIRECT_URL ?? 'exp://localhost:8081/--/callback'
+          : 'judy://callback',
       },
     });
     
