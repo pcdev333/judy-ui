@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Alert } from 'react-native';
+import React, { useState, useContext } from 'react';
+import { View, Text, TextInput, Alert, TouchableOpacity } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import Button from '@/components/ui/Button';
+import { DEV_BYPASS_AUTH } from '@/lib/devFlags';
+import { DevBypassContext } from '@/app/_layout';
 
 export default function AuthScreen() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const { setDevBypass } = useContext(DevBypassContext);
 
   async function handleSendMagicLink() {
     if (!email.trim()) return;
@@ -49,6 +52,41 @@ export default function AuthScreen() {
             disabled={loading || !email.trim()}
           />
         </>
+      )}
+
+      {DEV_BYPASS_AUTH && (
+        <View style={{ marginTop: 32, alignItems: 'center' }}>
+          {/* DEV ONLY — remove or disable EXPO_PUBLIC_DEV_BYPASS_AUTH before release */}
+          <View style={{
+            borderWidth: 1,
+            borderColor: '#E8470A',
+            borderStyle: 'dashed',
+            borderRadius: 12,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            alignItems: 'center',
+            width: '100%',
+          }}>
+            <Text style={{ fontSize: 10, color: '#E8470A', fontWeight: '700', marginBottom: 8, letterSpacing: 1 }}>
+              🛠 DEV MODE
+            </Text>
+            <TouchableOpacity
+              onPress={() => setDevBypass(true)}
+              style={{
+                backgroundColor: '#1A1A1A',
+                borderRadius: 12,
+                paddingVertical: 14,
+                paddingHorizontal: 24,
+                width: '100%',
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>
+                Continue as Guest (Dev Only)
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       )}
     </View>
   );
