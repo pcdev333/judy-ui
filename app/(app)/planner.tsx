@@ -263,7 +263,12 @@ export default function PlannerScreen() {
                 duration={structured?.duration}
               />
 
-              {selectedWorkout.is_locked ? (
+              {selectedWorkout.is_completed ? (
+                <View style={styles.completedRow}>
+                  <Text style={styles.completedIcon}>✅</Text>
+                  <Text style={styles.completedText}>Completed</Text>
+                </View>
+              ) : selectedWorkout.is_locked ? (
                 <View style={styles.lockedRow}>
                   <Text style={styles.lockIconLarge}>🔒</Text>
                   <Text style={styles.lockedText}>Locked</Text>
@@ -277,6 +282,16 @@ export default function PlannerScreen() {
                 </View>
               ) : (
                 <>
+                  {(selectedPlannerDate <= today) && (
+                    <TouchableOpacity
+                      onPress={() => router.push(`/(app)/workout/${selectedPlannerDate}`)}
+                      style={[styles.ctaStart, actionLoading && styles.disabled]}
+                      disabled={actionLoading}
+                    >
+                      <Text style={styles.ctaStartIcon}>▶</Text>
+                      <Text style={styles.ctaStartText}>Start Workout</Text>
+                    </TouchableOpacity>
+                  )}
                   <TouchableOpacity
                     onPress={() => handleLockDay(true)}
                     style={[styles.ctaPrimary, actionLoading && styles.disabled]}
@@ -426,6 +441,46 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.4,
+  },
+  completedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  completedIcon: {
+    fontSize: 20,
+  },
+  completedText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#34C759',
+  },
+  ctaStart: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 14,
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  ctaStartIcon: {
+    color: '#E8470A',
+    fontSize: 16,
+  },
+  ctaStartText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
 
