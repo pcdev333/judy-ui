@@ -39,7 +39,7 @@ export default function RootLayout() {
     const inAuthGroup = segments[0] === 'auth';
 
     if (devBypass || session) {
-      if (inAuthGroup) router.replace('/main');
+      if (inAuthGroup) router.replace('/(app)');
     } else {
       if (!inAuthGroup) router.replace('/auth');
     }

@@ -157,7 +157,7 @@ export default function TodayScreen() {
           <Text style={styles.todayLabel}>TODAY</Text>
           <Text style={styles.dateText}>{formatDisplayDate(today)}</Text>
         </View>
-        <TouchableOpacity onPress={() => router.push('/main/library')} style={styles.iconButton}>
+        <TouchableOpacity onPress={() => router.push('/(app)/library')} style={styles.iconButton}>
           <Text style={styles.iconText}>⚙️</Text>
         </TouchableOpacity>
       </View>
@@ -194,7 +194,7 @@ export default function TodayScreen() {
               </Text>
             </View>
             <TouchableOpacity
-              onPress={() => router.push(`/main/workout/${selectedDate}`)}
+              onPress={() => router.push(`/(app)/workout/${selectedDate}`)}
               style={styles.startButton}
             >
               <Text style={styles.startIcon}>▶</Text>
@@ -207,7 +207,7 @@ export default function TodayScreen() {
             title="No workout planned"
             subtitle="You haven't planned a workout for this day yet."
             ctaLabel="Plan a Workout"
-            onCtaPress={() => router.push('/main/planner')}
+            onCtaPress={() => router.push('/(app)/planner')}
           />
         )}
 
@@ -248,7 +248,7 @@ export default function TodayScreen() {
               <Text style={styles.lockedTomorrowTitle}>Tomorrow is locked</Text>
               <Text style={styles.lockedTomorrowSubtitle}>Unlock to change tomorrow's workout.</Text>
             </View>
-            <TouchableOpacity onPress={() => router.push('/main/planner')} style={styles.planButton}>
+            <TouchableOpacity onPress={() => router.push('/(app)/planner')} style={styles.planButton}>
               <Text style={styles.planButtonText}>View</Text>
             </TouchableOpacity>
           </View>
@@ -258,11 +258,11 @@ export default function TodayScreen() {
             title="Tomorrow is empty"
             subtitle="Plan ahead and stay consistent with your training."
             ctaLabel="Plan Tomorrow's Workout"
-            onCtaPress={() => router.push('/main/planner')}
+            onCtaPress={() => router.push('/(app)/planner')}
           />
         )}
       </ScrollView>
-      <FAB onPress={() => router.push('/main/create')} icon="+" />
+      <FAB onPress={() => router.push('/(app)/create')} icon="+" />
       <MilestoneToast
         visible={milestoneVisible}
         days={milestoneDays}

@@ -53,7 +53,7 @@ export default function CreateScreen() {
       await saveWorkout(parsed.title, inputText, parsed);
       setStep('saved');
       setTimeout(() => {
-        router.replace('/main/library');
+        router.replace('/(app)/library');
       }, 1500);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to save workout. Please try again.');

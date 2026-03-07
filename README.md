@@ -157,13 +157,13 @@ judy-ui/
 │   ├── auth/
 │   │   ├── index.tsx           # Auth screen — email input + magic link  (route: /auth)
 │   │   └── callback.tsx        # Magic link callback handler             (route: /auth/callback)
-│   ├── main/
-│   │   ├── index.tsx           # Today screen (home after login)         (route: /main)
+│   ├── (app)/
+│   │   ├── index.tsx           # Today screen (home after login)
 │   │   ├── workout/
-│   │   │   └── [id].tsx        # Workout Execution screen                (route: /main/workout/:id)
-│   │   ├── planner.tsx         # Planner screen                          (route: /main/planner)
-│   │   ├── library.tsx         # Workout Library screen                  (route: /main/library)
-│   │   └── create.tsx          # Create Workout screen                   (route: /main/create)
+│   │   │   └── [id].tsx        # Workout Execution screen
+│   │   ├── planner.tsx         # Planner screen
+│   │   ├── library.tsx         # Workout Library screen
+│   │   └── create.tsx          # Create Workout screen
 │   └── _layout.tsx             # Root layout + auth guard
 ├── components/
 │   └── ui/

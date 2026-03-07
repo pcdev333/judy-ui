@@ -102,7 +102,7 @@ export default function LibraryScreen() {
       <Text style={styles.emptyIcon}>🏋️</Text>
       <Text style={styles.emptyTitle}>No workouts yet</Text>
       <Text style={styles.emptySubtitle}>Create your first workout to get started.</Text>
-      <TouchableOpacity onPress={() => router.push('/main/create')} style={styles.emptyButton}>
+      <TouchableOpacity onPress={() => router.push('/(app)/create')} style={styles.emptyButton}>
         <Text style={styles.emptyButtonText}>Create your first workout</Text>
       </TouchableOpacity>
     </View>
@@ -142,7 +142,7 @@ export default function LibraryScreen() {
         />
       )}
 
-      <FAB onPress={() => router.push('/main/create')} icon="+" />
+      <FAB onPress={() => router.push('/(app)/create')} icon="+" />
     </View>
   );
 }
