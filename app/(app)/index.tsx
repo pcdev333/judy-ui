@@ -1,13 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
-import { lockTomorrow } from '@/lib/api';
+import { lockTomorrow, fetchStreakData, fetchPlannedWorkoutsForWeek } from '@/lib/api';
 import { useWorkoutStore } from '@/store/useWorkoutStore';
 import WeekDayStrip from '@/components/WeekDayStrip';
 import WorkoutHeroCard from '@/components/WorkoutHeroCard';
 import EmptyCard from '@/components/ui/EmptyCard';
 import FAB from '@/components/ui/FAB';
+import StreakCard from '@/components/StreakCard';
+import MilestoneToast from '@/components/MilestoneToast';
 
 function getTodayDate(): string {
   return new Date().toISOString().split('T')[0];
@@ -26,11 +30,14 @@ function formatDisplayDate(isoDate: string): string {
 
 export default function TodayScreen() {
   const router = useRouter();
-  const { todayWorkout, isLoading, setTodayWorkout, setLoading } = useWorkoutStore();
+  const { todayWorkout, isLoading, setTodayWorkout, setLoading, currentStreak, longestStreak, lastWorkoutDate, setStreakData } = useWorkoutStore();
   const [selectedDate, setSelectedDate] = useState(getTodayDate());
   const [tomorrowLocked, setTomorrowLocked] = useState(false);
   const [lockingTomorrow, setLockingTomorrow] = useState(false);
   const [tomorrowHasWorkout, setTomorrowHasWorkout] = useState(false);
+  const [weekCompletions, setWeekCompletions] = useState<string[]>([]);
+  const [milestoneVisible, setMilestoneVisible] = useState(false);
+  const [milestoneDays, setMilestoneDays] = useState(0);
 
   useEffect(() => {
     async function fetchTodayWorkout() {
@@ -72,6 +79,66 @@ export default function TodayScreen() {
     fetchTomorrowLockState();
   }, []);
 
+  // Fetch streak data on mount
+  useEffect(() => {
+    async function loadStreak() {
+      const streak = await fetchStreakData();
+      if (streak) {
+        setStreakData(streak);
+      }
+    }
+    loadStreak();
+  }, []);
+
+  // Fetch this week's completions for StreakCard dots
+  useEffect(() => {
+    async function loadWeekCompletions() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monday = new Date(today);
+      monday.setDate(today.getDate() + mondayOffset);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const weekStart = monday.toISOString().split('T')[0];
+      const weekEnd = sunday.toISOString().split('T')[0];
+      try {
+        const workouts = await fetchPlannedWorkoutsForWeek(weekStart, weekEnd);
+        const completedDates = workouts
+          .filter((pw) => pw.is_completed)
+          .map((pw) => pw.planned_date);
+        setWeekCompletions(completedDates);
+      } catch {
+        // ignore
+      }
+    }
+    loadWeekCompletions();
+  }, []);
+
+  // Check for pending milestone on screen focus
+  useFocusEffect(
+    useCallback(() => {
+      async function checkPendingMilestone() {
+        try {
+          const pending = await AsyncStorage.getItem('pending_milestone');
+          if (pending) {
+            const days = parseInt(pending, 10);
+            await AsyncStorage.removeItem('pending_milestone');
+            if (!isNaN(days) && days > 0) {
+              setMilestoneDays(days);
+              setMilestoneVisible(true);
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+      checkPendingMilestone();
+    }, []),
+  );
+
   const today = getTodayDate();
   const structured = todayWorkout?.workout?.structured_json as {
     exercises?: unknown[];
@@ -103,6 +170,14 @@ export default function TodayScreen() {
       />
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Streak Card */}
+        <StreakCard
+          currentStreak={currentStreak}
+          longestStreak={longestStreak}
+          lastWorkoutDate={lastWorkoutDate}
+          weekCompletions={weekCompletions}
+        />
+
         {isLoading ? (
           <ActivityIndicator size="large" color="#E8470A" style={styles.loader} />
         ) : todayWorkout ? (
@@ -188,6 +263,11 @@ export default function TodayScreen() {
         )}
       </ScrollView>
       <FAB onPress={() => router.push('/(app)/create')} icon="+" />
+      <MilestoneToast
+        visible={milestoneVisible}
+        days={milestoneDays}
+        onDismiss={() => setMilestoneVisible(false)}
+      />
     </View>
   );
 }

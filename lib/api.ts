@@ -203,3 +203,94 @@ export async function finishPlannedWorkout(plannedWorkoutId: string): Promise<vo
     .eq('id', plannedWorkoutId);
   if (error) throw error;
 }
+
+type StreakRow = { current_streak: number; longest_streak: number; last_workout_date: string | null };
+
+export async function fetchStreakData(): Promise<{
+  current_streak: number;
+  longest_streak: number;
+  last_workout_date: string | null;
+} | null> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) return null;
+
+  const { data, error } = await supabase
+    .from('users')
+    .select('current_streak, longest_streak, last_workout_date')
+    .eq('id', session.user.id)
+    .single();
+
+  if (error || !data) return null;
+
+  const row = data as StreakRow;
+  return {
+    current_streak: row.current_streak ?? 0,
+    longest_streak: row.longest_streak ?? 0,
+    last_workout_date: row.last_workout_date ?? null,
+  };
+}
+
+export async function updateStreakAfterWorkout(): Promise<{
+  current_streak: number;
+  longest_streak: number;
+  is_milestone: boolean;
+  milestone_days?: number;
+}> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) {
+    return { current_streak: 0, longest_streak: 0, is_milestone: false };
+  }
+
+  const { data, error } = await supabase
+    .from('users')
+    .select('current_streak, longest_streak, last_workout_date')
+    .eq('id', session.user.id)
+    .single();
+
+  if (error || !data) {
+    return { current_streak: 0, longest_streak: 0, is_milestone: false };
+  }
+
+  const row = data as StreakRow;
+  const current_streak = row.current_streak ?? 0;
+  const longest_streak = row.longest_streak ?? 0;
+  const last_workout_date = row.last_workout_date ?? null;
+
+  const today = new Date().toISOString().split('T')[0];
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = yesterdayDate.toISOString().split('T')[0];
+
+  // Idempotent: already updated today
+  if (last_workout_date === today) {
+    return { current_streak, longest_streak, is_milestone: false };
+  }
+
+  let new_streak: number;
+  if (last_workout_date === yesterday) {
+    new_streak = current_streak + 1;
+  } else {
+    new_streak = 1;
+  }
+
+  const new_longest = Math.max(longest_streak, new_streak);
+
+  await supabase
+    .from('users')
+    .update({ current_streak: new_streak, longest_streak: new_longest, last_workout_date: today })
+    .eq('id', session.user.id);
+
+  const milestones = [3, 7, 14, 30];
+  const is_milestone = milestones.includes(new_streak);
+
+  return {
+    current_streak: new_streak,
+    longest_streak: new_longest,
+    is_milestone,
+    ...(is_milestone ? { milestone_days: new_streak } : {}),
+  };
+}

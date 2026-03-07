@@ -12,12 +12,14 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   fetchPlannedWorkoutByDate,
   fetchWorkoutLogs,
   upsertWorkoutLog,
   finishPlannedWorkout,
+  updateStreakAfterWorkout,
 } from '@/lib/api';
 import { useWorkoutStore } from '@/store/useWorkoutStore';
 import { ParsedExercise, PlannedWorkout, WorkoutLog } from '@/types';
@@ -55,6 +57,7 @@ export default function WorkoutExecutionScreen() {
     setActiveWorkoutLogs,
     upsertActiveWorkoutLog,
     updatePlannedWorkout,
+    setStreakData,
   } = useWorkoutStore();
 
   const [loading, setLoading] = useState(true);
@@ -253,6 +256,23 @@ export default function WorkoutExecutionScreen() {
           is_completed: true,
           completed_at: new Date().toISOString(),
         });
+
+        // Update streak
+        const today = new Date().toISOString().split('T')[0];
+        try {
+          const streakResult = await updateStreakAfterWorkout();
+          setStreakData({
+            current_streak: streakResult.current_streak,
+            longest_streak: streakResult.longest_streak,
+            last_workout_date: today,
+          });
+          if (streakResult.is_milestone && streakResult.milestone_days != null) {
+            await AsyncStorage.setItem('pending_milestone', String(streakResult.milestone_days));
+          }
+        } catch {
+          // Streak update failure should not block navigation
+        }
+
         setActivePlannedWorkout(null);
         router.back();
       } catch (e: unknown) {
