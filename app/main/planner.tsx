@@ -284,7 +284,7 @@ export default function PlannerScreen() {
                 <>
                   {(selectedPlannerDate <= today) && (
                     <TouchableOpacity
-                      onPress={() => router.push(`/(app)/workout/${selectedPlannerDate}`)}
+                      onPress={() => router.push(`/main/workout/${selectedPlannerDate}`)}
                       style={[styles.ctaStart, actionLoading && styles.disabled]}
                       disabled={actionLoading}
                     >

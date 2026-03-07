@@ -93,7 +93,7 @@ export default function WorkoutPickerSheet({
             <TouchableOpacity
               onPress={() => {
                 onClose();
-                router.push('/(app)/create');
+                router.push('/main/create');
               }}
               style={styles.createButton}
             >

@@ -37,14 +37,14 @@ export default function CallbackScreen() {
           }
 
           if (sessionData.session) {
-            router.replace('/(app)');
+            router.replace('/main');
           }
           return;
         }
 
         if (data.session) {
           // Session is automatically updated via onAuthStateChange in _layout
-          router.replace('/(app)');
+          router.replace('/main');
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
