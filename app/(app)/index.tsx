@@ -7,6 +7,7 @@ import { useWorkoutStore } from '@/store/useWorkoutStore';
 import WeekDayStrip from '@/components/WeekDayStrip';
 import WorkoutHeroCard from '@/components/WorkoutHeroCard';
 import EmptyCard from '@/components/ui/EmptyCard';
+import FAB from '@/components/ui/FAB';
 
 function getTodayDate(): string {
   return new Date().toISOString().split('T')[0];
@@ -98,6 +99,7 @@ export default function TodayScreen() {
       <WeekDayStrip
         selectedDate={selectedDate}
         onSelectDate={setSelectedDate}
+        collapsible
       />
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -185,6 +187,7 @@ export default function TodayScreen() {
           />
         )}
       </ScrollView>
+      <FAB onPress={() => router.push('/(app)/create')} icon="+" />
     </View>
   );
 }
