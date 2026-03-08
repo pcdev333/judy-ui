@@ -7,12 +7,15 @@ import { supabase } from '@/lib/supabase';
 /**
  * Handles the Supabase magic link callback.
  *
- * Supabase magic links redirect to this screen with the session tokens
- * in the URL hash fragment, e.g.:
+ * Supabase v2 uses PKCE flow by default, redirecting with a `code` query
+ * parameter that must be exchanged for a session, e.g.:
+ *   judy://auth/callback?code=xxx
+ *
+ * Older implicit-flow links carry the tokens directly in the URL hash fragment:
  *   exp://IP:8081/--/auth/callback#access_token=xxx&refresh_token=xxx&type=signup
  *
  * React Native's router does NOT expose hash fragments via useLocalSearchParams,
- * so we use expo-linking to get the full URL and parse the hash manually.
+ * so we use expo-linking to get the full URL and parse it manually.
  */
 export default function CallbackScreen() {
   const router = useRouter();
@@ -26,8 +29,32 @@ export default function CallbackScreen() {
       handled = true;
 
       try {
-        // The tokens are in the hash fragment after '#'
+        // ── PKCE flow (Supabase v2 default) ──────────────────────────────────
+        // The authorization code arrives as a query parameter: ?code=xxx
+        const queryIndex = url.indexOf('?');
         const hashIndex = url.indexOf('#');
+
+        if (queryIndex !== -1) {
+          // When hashIndex is -1, undefined causes substring() to read to end of string.
+          const queryEnd = hashIndex !== -1 ? hashIndex : undefined;
+          const queryString = url.substring(queryIndex + 1, queryEnd);
+          const queryParams = new URLSearchParams(queryString);
+          const code = queryParams.get('code');
+
+          if (code) {
+            const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+            if (exchangeError) {
+              setError(exchangeError.message);
+              return;
+            }
+            // Session is now set — _layout.tsx onAuthStateChange will redirect.
+            router.replace('/(app)');
+            return;
+          }
+        }
+
+        // ── Implicit flow (legacy) ────────────────────────────────────────────
+        // Tokens are in the hash fragment: #access_token=xxx&refresh_token=xxx
         if (hashIndex === -1) {
           setError('Invalid magic link — no token fragment found.');
           return;
