@@ -89,14 +89,17 @@ export default function CallbackScreen() {
       }
     }
 
-    // Get the URL that launched this screen
+    // Get the URL that launched this screen (cold-start / background-to-foreground).
+    // When the app is already in the foreground, getInitialURL() returns null and
+    // the magic-link URL is delivered via the 'url' event below — so null is not
+    // an error; just let the event listener handle it.
     Linking.getInitialURL()
       .then((url) => {
         if (url) {
           handleDeepLink(url);
-        } else {
-          setError('No redirect URL received.');
         }
+        // null is expected when the app was already open; the 'url' listener below
+        // will receive the deep-link URL in that case.
       })
       .catch(() => {
         setError('Failed to retrieve redirect URL.');
